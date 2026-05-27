@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 36" fill="none">
+  <!-- N -->
+  <path d="M2 30V6h3.5l10 16V6H19v24h-3.5L5.5 14v16H2z" fill="#1ec8c8"/>
+  <!-- x -->
+  <path d="M22 13l5 7-5 7h4l3-4.5 3 4.5h4l-5-7 5-7h-4l-3 4.5-3-4.5h-4z" fill="#1ec8c8"/>
+  <!-- D -->
+  <path d="M37 6h6c5 0 9 4 9 12s-4 12-9 12h-6V6zm3.5 3.5v17h2.5c3 0 5.5-2.5 5.5-8.5S46 9.5 43 9.5h-2.5z" fill="#1ec8c8"/>
+  <!-- swoosh -->
+  <path d="M2 34 Q28 26 54 30" stroke="#1ec8c8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>

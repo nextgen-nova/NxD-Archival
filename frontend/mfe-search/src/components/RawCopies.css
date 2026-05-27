@@ -1,0 +1,484 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Raw Copies — Search Panel & Results
+   Collection: amp_raw_copies
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Raw XML viewer colour token ─────────────────────────────────────────────
+   Change --rc-raw-bg in your theme or .env-driven CSS injection to restyle
+   the expanded raw content panel without touching any other rule.           */
+:root {
+    --rc-raw-bg:          #0f172a;   /* dark navy  — expanded raw XML panel  */
+    --rc-raw-bg-hover:    #0f172a;   /* same: hover must NOT lighten the panel */
+    --rc-raw-text:        #e2e8f0;   /* light slate text                      */
+    --rc-raw-meta:        #64748b;   /* muted slate for ID / date meta line   */
+    --rc-raw-border:      #1e293b;   /* subtle border inside dark panel       */
+    --rc-raw-scrollbar-track: #1e293b;
+    --rc-raw-scrollbar-thumb: #475569;
+    --rc-raw-copy-btn-bg:      #1e293b;
+    --rc-raw-copy-btn-text:    #94a3b8;
+    --rc-raw-copy-btn-border:  #334155;
+    --rc-raw-copy-btn-hover-bg:#334155;
+    --rc-raw-copy-btn-hover-text:#e2e8f0;
+    --rc-status-default-bg:    #f1f5f9;
+    --rc-status-default-text:  #475569;
+}
+
+/* ── Search panel ──────────────────────────────────────────────────────── */
+.rc-panel {
+    background: var(--gray-7);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+}
+
+.rc-panel-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--search-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--black);
+    cursor: pointer;
+    margin-bottom: 16px;
+    user-select: none;
+}
+
+.rc-panel-title-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rc-mode-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--status-warn-border);
+    color: var(--status-pending-text);
+    font-size: var(--search-font-size-xs);
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px 16px;
+}
+
+.rc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.rc-field label {
+    font-size: var(--search-font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--black);
+}
+
+.rc-field input,
+.rc-field select {
+    height: 36px;
+    padding: 8px 11px;
+    border: 1px solid var(--gray-4);
+    border-radius: var(--radius);
+    font-size: var(--search-font-size-base);
+    color: var(--black);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--font);
+}
+
+.rc-field input:focus,
+.rc-field select:focus {
+    border-color: var(--black);
+    box-shadow: var(--focus-ring);
+}
+
+.rc-field input:hover,
+.rc-field select:hover {
+    border-color: var(--black-3);
+}
+
+.rc-field input::placeholder {
+    color: var(--gray-3);
+}
+
+.rc-field-wide {
+    grid-column: 1 / -1;
+}
+
+.rc-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.rc-toggle-row label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-2);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.rc-toggle-row input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* ── Stats bar ─────────────────────────────────────────────────────────── */
+.rc-stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.rc-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    background: var(--white);
+    border: 1px solid var(--gray-5);
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.rc-stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--black);
+    font-family: var(--font-mono);
+}
+
+.rc-stat-label {
+    font-size: var(--search-font-size-sm);
+    color: var(--gray-2);
+    font-weight: 500;
+}
+
+.rc-stat.rc-stat-dup .rc-stat-value { color: var(--danger); }
+.rc-stat.rc-stat-ok  .rc-stat-value { color: var(--ok,     var(--status-ok-dot)); }
+
+/* ── Results table ─────────────────────────────────────────────────────── */
+.rc-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--gray-6);
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.rc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--search-font-size-base);
+    min-width: 900px;
+}
+
+.rc-table thead th {
+    background: var(--gray-7);
+    padding: 11px 14px;
+    text-align: left;
+    font-size: var(--search-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gray-2);
+    border-bottom: 2px solid var(--gray-5);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.rc-table tbody tr {
+    border-bottom: 1px solid var(--gray-6);
+    transition: background 0.1s;
+    cursor: pointer;
+}
+
+.rc-table tbody tr:hover { background: var(--gray-7); }
+/* Raw XML expanded row must NEVER change colour on hover */
+.rc-table tbody tr.rc-raw-row:hover,
+.rc-table tbody tr.rc-raw-row:focus,
+.rc-table tbody tr.rc-raw-row { background: transparent !important; }
+.rc-table tbody tr:last-child { border-bottom: none; }
+
+.rc-table td {
+    padding: 11px 14px;
+    color: var(--black-3);
+    vertical-align: middle;
+    font-size: var(--search-font-size-base);
+}
+
+/* ── Group header row ──────────────────────────────────────────────────── */
+.rc-group-header {
+    background: linear-gradient(90deg, var(--accent-hover-bg) 0%, var(--white) 100%);
+    border-bottom: 2px solid var(--status-info-border) !important;
+}
+
+.rc-group-header td {
+    padding: 10px 14px;
+}
+
+.rc-group-ref {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rc-group-ref-text {
+    font-family: var(--font-mono, monospace);
+    font-weight: 700;
+    font-size: var(--search-font-size-base);
+    color: var(--status-info-text);
+}
+
+.rc-group-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+/* ── Row detail expand ─────────────────────────────────────────────────── */
+.rc-expand-btn {
+    background: none;
+    border: 1px solid var(--gray-5);
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-3);
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.rc-expand-btn:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.rc-expand-btn.open {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* ── Expanded raw XML row ───────────────────────────────────────────────── */
+/* The <tr> itself must be dark — overrides the even/odd alternating rule */
+.rc-raw-row,
+.rc-raw-row:hover,
+.rc-raw-row:focus,
+.rc-raw-row:nth-child(even),
+.rc-raw-row:nth-child(odd) {
+    background: var(--rc-raw-bg) !important;
+    background-color: var(--rc-raw-bg) !important;
+}
+
+.rc-raw-row td {
+    padding: 0;
+    background: var(--rc-raw-bg) !important;
+    background-color: var(--rc-raw-bg) !important;
+}
+
+.rc-raw-row td:hover,
+.rc-raw-row:hover td {
+    background: var(--rc-raw-bg) !important;
+    background-color: var(--rc-raw-bg) !important;
+}
+
+.rc-raw-inner {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rc-raw-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rc-raw-meta);
+    margin-bottom: 6px;
+}
+
+.rc-raw-xml {
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--rc-raw-text);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 320px;
+    overflow-y: auto;
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.rc-raw-xml::-webkit-scrollbar       { width: 5px; }
+.rc-raw-xml::-webkit-scrollbar-track { background: var(--rc-raw-scrollbar-track); }
+.rc-raw-xml::-webkit-scrollbar-thumb { background: var(--rc-raw-scrollbar-thumb); border-radius: 3px; }
+
+/* ── Status & direction badges ──────────────────────────────────────────── */
+.rc-status {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.rc-status-ok       { background: var(--status-ok-bg); color: var(--dir-out-text); }
+.rc-status-pending  { background: var(--status-warn-bg); color: var(--status-warn-text); }
+.rc-status-fail     { background: var(--status-fail-bg); color: var(--status-fail-text); }
+.rc-status-default  { background: var(--rc-status-default-bg); color: var(--rc-status-default-text); }
+
+.rc-dir {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.rc-dir-in  { background: var(--status-info-bg); color: var(--dir-in-text); }
+.rc-dir-out { background: var(--status-fail-border); color: var(--status-fail-text); }
+.rc-dir-rt  { background: var(--dir-rt-bg); color: var(--dir-rt-text); }
+
+.rc-dup-yes { color: var(--danger); font-weight: 700; font-size: 11px; }
+.rc-dup-no  { color: var(--ok,     var(--status-ok-dot)); font-weight: 500; font-size: 11px; }
+
+/* ── Mono cell ─────────────────────────────────────────────────────────── */
+.rc-mono {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--search-font-size-sm);
+    color: var(--black-3);
+}
+
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+.rc-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 4px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rc-page-info {
+    font-size: var(--search-font-size-sm);
+    color: var(--gray-2);
+}
+
+.rc-page-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rc-pg-btn {
+    height: 30px;
+    min-width: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--gray-5);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--black-3);
+    font-size: var(--search-font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: var(--font);
+}
+
+.rc-pg-btn:hover:not(:disabled) {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.rc-pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.rc-pg-btn.rc-pg-active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.rc-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray-3);
+}
+
+.rc-empty p {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 12px 0 6px;
+    color: var(--gray-2);
+}
+
+.rc-empty span { font-size: var(--search-font-size-base); }
+
+/* ── Copy raw XML button ────────────────────────────────────────────────── */
+.rc-copy-btn {
+    background: var(--rc-raw-copy-btn-bg);
+    color: var(--rc-raw-copy-btn-text);
+    border: 1px solid var(--rc-raw-copy-btn-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    align-self: flex-start;
+}
+
+.rc-copy-btn:hover {
+    background: var(--rc-raw-copy-btn-hover-bg);
+    color: var(--rc-raw-copy-btn-hover-text);
+}
+
+.rc-copy-btn.copied {
+    background: var(--status-ok-text);
+    color: var(--status-ok-border);
+    border-color: var(--dir-out-text);
+}

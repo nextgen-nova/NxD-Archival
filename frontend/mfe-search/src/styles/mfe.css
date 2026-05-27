@@ -1,0 +1,69 @@
+/* mfe.css — static base tokens; brand tokens set by applyTheme() at runtime */
+:root {
+  --white:#ffffff; --black:#0f172a; --black-3:#1e293b;
+  --gray-1:#334155; --gray-2:#64748b; --gray-3:#94a3b8; --gray-4:#cbd5e1; --gray-5:#e2e8f0; --gray-6:#f1f5f9; --gray-7:#f8fafc;
+  --ok:#059669; --ok-light:#ecfdf5; --ok-border:#b7dfc5;
+  --danger:#dc2626; --danger-light:#fef2f2; --danger-border:#f5c6c2;
+  --warn:#9a6500; --warn-light:#fff8e6; --warn-border:#f5d9a8;
+  --highlight-bg:#fff3b0; --highlight-color:#7a5000;
+  --info:#1a5fa3;
+  --accent:#6366f1; --accent-light:#eef2ff; --accent-mid:#c7d2fe; --accent-hover-bg:#eff6ff;
+  --radius-sm:5px; --radius:8px; --radius-md:12px; --radius-lg:14px;
+  --shadow:0 2px 6px rgb(0 0 0/0.05),0 1px 3px rgb(0 0 0/0.04);
+  --shadow-md:0 8px 16px rgb(0 0 0/0.08),0 3px 6px rgb(0 0 0/0.05);
+  --shadow-modal:0 20px 60px rgba(10,10,10,.14),0 8px 20px rgba(10,10,10,.08);
+  --overlay-bg:rgba(10,10,10,0.40);
+  --focus-ring:0 0 0 3px rgba(10,10,10,0.06);
+  --mono:ui-monospace,"Cascadia Code","Source Code Pro",Menlo,Consolas,monospace;
+  --font-mono:ui-monospace,"Cascadia Code","Source Code Pro",Menlo,Consolas,monospace;
+
+  /* Status / semantic colours */
+  --status-ok-bg:       #dcfce7;
+  --status-ok-text:     #14532d;
+  --status-ok-border:   #86efac;
+  --status-ok-dot:      #22c55e;
+  --status-warn-bg:     #fef9c3;
+  --status-warn-text:   #854d0e;
+  --status-warn-border: #fef3c7;
+  --status-fail-bg:     #fee2e2;
+  --status-fail-text:   #991b1b;
+  --status-fail-border: #fce7f3;
+  --status-info-bg:     #dbeafe;
+  --status-info-text:   #1d4ed8;
+  --status-info-border: #bfdbfe;
+  --status-pending-bg:  #fef3c7;
+  --status-pending-text:#92400e;
+
+  /* Direction badges */
+  --dir-in-bg:          #dbeafe;
+  --dir-in-text:        #1e40af;
+  --dir-out-bg:         #dcfce7;
+  --dir-out-text:       #166534;
+  --dir-rt-bg:          #f3f4f6;
+  --dir-rt-text:        #374151;
+
+  /* Overlays / shadows (alpha-only — no colour change needed) */
+  --overlay-sm:         rgba(0,0,0,0.06);
+  --overlay-md:         rgba(0,0,0,0.12);
+  --overlay-lg:         rgba(0,0,0,0.22);
+  --overlay-xl:         rgba(0,0,0,0.35);
+  --shadow-sm-raw:      0 2px 6px rgb(0 0 0/0.04),0 1px 3px rgb(0 0 0/0.05);
+  --shadow-modal-raw:   0 20px 60px rgba(10,10,10,.14),0 8px 20px rgba(10,10,10,.08);
+  --focus-ring-raw:     0 0 0 3px rgba(10,10,10,0.06);
+
+  /* Misc */
+  --red-700:            #b91c1c;
+  --amber-700:          #b45309;
+  --white-a25:          rgba(255,255,255,0.25);
+  --white-a35:          rgba(255,255,255,0.35);
+  --white-a45:          rgba(255,255,255,0.45);
+  --black-a10:          rgba(0,0,0,0.10);
+  --black-a14:          rgba(0,0,0,0.14);
+  --black-a20:          rgba(0,0,0,0.20);
+  --black-a26:          rgba(0,0,0,0.26);
+  --black-a28:          rgba(0,0,0,0.28);
+  --black-a30:          rgba(0,0,0,0.3);
+  --white-a40:          rgba(255,255,255,0.4);
+}
+*,*::before,*::after { font-family:var(--font) !important; }
+.mfe-root { font-family:var(--font); background:var(--background-color); color:var(--data-color); min-height:100%; }

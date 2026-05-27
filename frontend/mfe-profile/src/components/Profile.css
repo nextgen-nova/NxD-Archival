@@ -1,0 +1,624 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Profile.css  –  fully theme-driven; zero hardcoded design values.
+   All tokens come from mfe.css (:root) and applyTheme() (--font, --heading-color,
+   --primary-color, --background-color, --accent-color, --data-color).
+───────────────────────────────────────────────────────────────────────────── */
+
+.profile-container {
+  display: flex;
+  gap: 32px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  min-height: 600px;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.profile-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, var(--gray-7) 0%, var(--white) 100%);
+  border-right: 1px solid var(--gray-5);
+  padding: 32px 0;
+  flex-shrink: 0;
+}
+
+.profile-avatar-section {
+  text-align: center;
+  padding: 0 24px 32px;
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.profile-avatar-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent) 100%);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-color) 28%, transparent);
+}
+
+.profile-avatar-section h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: var(--heading-color);
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.profile-role {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: var(--data-color);
+  font-weight: 500;
+  font-family: var(--font);
+}
+
+.profile-id {
+  margin: 0;
+  font-size: 12px;
+  color: var(--gray-3);
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Sidebar status badge ─────────────────────────────────────────────────── */
+.profile-status-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.profile-status-badge.active {
+  background: var(--ok-light);
+  color: var(--ok);
+}
+
+.profile-status-badge.inactive {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+/* ── Sidebar navigation ───────────────────────────────────────────────────── */
+.profile-nav {
+  padding: 24px 0;
+}
+
+.profile-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border: none;
+  background: transparent;
+  border-left: 3px solid transparent;
+  color: var(--gray-2);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-left-color 0.2s;
+}
+
+.profile-nav-item:hover {
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+  color: var(--heading-color);
+}
+
+.profile-nav-item.active {
+  background: var(--accent-light);
+  border-left-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.profile-nav-item svg {
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Main content ─────────────────────────────────────────────────────────── */
+.profile-main {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.profile-section {
+  max-width: 800px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.section-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: var(--heading-color);
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.section-header p {
+  margin: 0;
+  color: var(--data-color);
+  font-size: 14px;
+  font-family: var(--font);
+}
+
+/* ── Edit button ──────────────────────────────────────────────────────────── */
+.btn-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--white);
+  border: 1px solid var(--gray-5);
+  border-radius: var(--radius);
+  color: var(--data-color);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-edit:hover {
+  background: var(--gray-7);
+  border-color: var(--gray-4);
+}
+
+/* ── Profile detail view ──────────────────────────────────────────────────── */
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.detail-item label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-2);
+  font-family: var(--font);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-item p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--heading-color);
+  font-family: var(--font);
+}
+
+/* ── Status / role badges ─────────────────────────────────────────────────── */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: var(--font);
+}
+
+.status-badge.active {
+  background: var(--ok-light);
+  color: var(--ok);
+}
+
+.status-badge.inactive {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-family: var(--font);
+}
+
+/* ── Forms ────────────────────────────────────────────────────────────────── */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.profile-form h3 {
+  margin: 24px 0 0 0;
+  font-size: 18px;
+  color: var(--heading-color);
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--heading-color);
+  font-family: var(--font);
+}
+
+.form-group input,
+.form-group select {
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--gray-5);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: var(--font);
+  color: var(--heading-color);
+  background: var(--white);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 14%, transparent);
+}
+
+.disabled-input {
+  background: var(--gray-7);
+  color: var(--gray-3);
+  cursor: not-allowed;
+}
+
+.field-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--danger);
+  font-family: var(--font);
+}
+
+.checkbox-group {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  height: auto;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--accent-color);
+}
+
+/* ── Form actions ─────────────────────────────────────────────────────────── */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.btn-cancel,
+.btn-save {
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.btn-cancel {
+  background: var(--white);
+  border: 1px solid var(--gray-5);
+  color: var(--data-color);
+}
+
+.btn-cancel:hover {
+  background: var(--gray-7);
+  border-color: var(--gray-4);
+}
+
+.btn-save {
+  background: var(--accent-color);
+  border: none;
+  color: var(--white);
+}
+
+.btn-save:hover:not(:disabled) {
+  background: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-color) 32%, transparent);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Password requirements ────────────────────────────────────────────────── */
+.password-requirements {
+  background: var(--gray-7);
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-5);
+}
+
+.requirements-title {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--data-color);
+  font-family: var(--font);
+}
+
+.password-requirements ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.password-requirements li {
+  padding: 6px 0 6px 24px;
+  font-size: 13px;
+  color: var(--gray-3);
+  font-family: var(--font);
+  position: relative;
+}
+
+.password-requirements li::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+  color: var(--gray-4);
+}
+
+.password-requirements li.valid {
+  color: var(--ok);
+}
+
+.password-requirements li.valid::before {
+  content: '✓';
+  color: var(--ok);
+  font-weight: bold;
+}
+
+/* ── Security info ────────────────────────────────────────────────────────── */
+.security-info {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--gray-5);
+}
+
+.security-info h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: var(--heading-color);
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: var(--gray-7);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-5);
+}
+
+.info-item svg {
+  color: var(--data-color);
+  flex-shrink: 0;
+}
+
+.info-label {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: var(--data-color);
+  font-weight: 500;
+  font-family: var(--font);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  margin: 0;
+  font-size: 14px;
+  color: var(--heading-color);
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+/* ── Activity log ─────────────────────────────────────────────────────────── */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: var(--gray-7);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-5);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.activity-item:hover {
+  background: var(--gray-6);
+  border-color: var(--gray-4);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-icon.login {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.activity-icon.search {
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  color: var(--primary-color);
+}
+
+.activity-icon.update {
+  background: var(--ok-light);
+  color: var(--ok);
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--heading-color);
+  font-family: var(--font);
+}
+
+.activity-details {
+  margin: 0;
+  font-size: 13px;
+  color: var(--data-color);
+  font-family: var(--font);
+}
+
+.activity-time {
+  font-size: 12px;
+  color: var(--gray-3);
+  font-family: var(--font);
+  white-space: nowrap;
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+.profile-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  padding: 14px 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-toast-success {
+  background: var(--ok-light);
+  color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 20%, transparent);
+}
+
+.profile-toast-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent);
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+  }
+
+  .profile-sidebar {
+    width: 100%;
+    padding: 24px 0;
+  }
+
+  .profile-main {
+    padding: 24px;
+  }
+
+  .form-row,
+  .detail-row,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .btn-edit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    width: 100%;
+  }
+}
