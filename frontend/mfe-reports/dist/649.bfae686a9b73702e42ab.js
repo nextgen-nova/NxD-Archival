@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkmfe_reports=self.webpackChunkmfe_reports||[]).push([[649],{649(e,t,r){r.r(t),r.d(t,{default:()=>u});var f=r(914),n=(r(163),r(230),r(209)),s=r(560);function u(){return(0,f.useEffect)(function(){(0,n.A)()},[]),f.createElement("div",{className:"mfe-root"},f.createElement(s.A,null))}}}]);

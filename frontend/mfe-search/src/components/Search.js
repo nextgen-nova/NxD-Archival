@@ -179,7 +179,13 @@ const toPrettyLabel = (key) => {
 
 const stringifyExportValue = (value) => {
     if (value === null || value === undefined) return "";
-    if (typeof value === "string") return value;
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        const emptyMarkers = new Set(["—", "Ã¢â‚¬â€", "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â", "ï¿½", "�"]);
+        if (!trimmed || emptyMarkers.has(trimmed)) return "-";
+        if (!trimmed || trimmed === "â€”" || trimmed === "Ã¢â‚¬â€" || trimmed === "�") return "-";
+        return value;
+    }
     if (typeof value === "number" || typeof value === "boolean") return String(value);
     if (value instanceof Date) return value.toISOString();
     try { return JSON.stringify(value); } catch { return String(value); }
@@ -2531,7 +2537,7 @@ function FloatingModal({
             const mxTreeRows = kind === "mx" ? buildMxHierarchyRows(lines, getMxNodeLabels(msg)) : null;
             return {
                 label: "Extended text",
-                layout: kind === "mt" ? "mt-extended" : kind === "mx" ? "mx-hierarchy" : "generic",
+                layout: kind === "mt" ? "table" : kind === "mx" ? "mx-hierarchy" : "generic",
                 title: kind === "mt" ? `General Information - ${getDisplayType(msg) || msg.messageCode || "MT Message"}` : null,
                 columns: [
                     { key: "tag", label: kind === "mx" ? "Node" : "Tag" },
@@ -4674,7 +4680,7 @@ function Search() {
             const mxTreeRows = kind === "mx" ? buildMxHierarchyRows(lines, getMxNodeLabels(msg)) : null;
             return {
                 label: "Extended text",
-                layout: kind === "mt" ? "mt-extended" : kind === "mx" ? "mx-hierarchy" : "generic",
+                layout: kind === "mt" ? "table" : kind === "mx" ? "mx-hierarchy" : "generic",
                 title: kind === "mt" ? `General Information - ${getDisplayType(msg) || msg.messageCode || "MT Message"}` : null,
                 columns: [
                     { key: "tag", label: kind === "mx" ? "Node" : "Tag" },

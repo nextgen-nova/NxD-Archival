@@ -11,6 +11,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Service;
 
+import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -366,6 +367,15 @@ public class ExportRenderService {
         return switch (targetKey) {
             case "header" -> buildPairBlock("Header", getHeaderRows(message));
             case "applicationheader" -> buildPairBlock("Application Header", getApplicationHeaderRows(message));
+            case "finheader" -> new SectionBlock("FIN Header",
+                    "table",
+                    List.of(
+                            new ExportColumnRequest("tag", "Tag"),
+                            new ExportColumnRequest("label", "Field Label"),
+                            new ExportColumnRequest("rawValue", "Value")
+                    ),
+                    getFinHeaderRows(message),
+                    null);
             case "history" -> new SectionBlock("History",
                     "table",
                     List.of(
@@ -433,6 +443,36 @@ public class ExportRenderService {
         Map<String, Object> applicationHeader = findApplicationHeader(message);
         List<Map<String, String>> rows = new ArrayList<>();
         flattenApplicationHeader(applicationHeader, "", rows);
+        return rows;
+    }
+
+    private List<Map<String, String>> getFinHeaderRows(SearchResponse message) {
+        List<Map<String, Object>> rawRows = message.getFinHeaderFields();
+        if ((rawRows == null || rawRows.isEmpty()) && message.getRawMessage() != null) {
+            Object mtPayload = message.getRawMessage().get("mtPayload");
+            if (mtPayload instanceof Map<?, ?> map) {
+                Object nestedRows = map.get("finHeaderFields");
+                if (nestedRows instanceof List<?> list) {
+                    rawRows = new ArrayList<>();
+                    for (Object item : list) {
+                        if (item instanceof Map<?, ?> itemMap) {
+                            rawRows.add(toObjectMap(itemMap));
+                        }
+                    }
+                }
+            }
+        }
+        if (rawRows == null || rawRows.isEmpty()) {
+            return List.of();
+        }
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (Map<String, Object> rawRow : rawRows) {
+            Map<String, String> row = new LinkedHashMap<>();
+            row.put("tag", cleanCell(firstNonBlank(stringify(rawRow.get("tag")), "-")));
+            row.put("label", cleanCell(firstNonBlank(stringify(rawRow.get("label")), "-")));
+            row.put("rawValue", cleanCell(firstNonBlank(stringify(rawRow.get("rawValue")), stringify(rawRow.get("value")), "-")));
+            rows.add(row);
+        }
         return rows;
     }
 
@@ -932,6 +972,22 @@ public class ExportRenderService {
         return String.valueOf(value);
     }
 
+    private String cleanCell(String value) {
+        if (value == null) {
+            return "-";
+        }
+        String trimmed = value.trim();
+        if (trimmed.isBlank()
+                || "—".equals(trimmed)
+                || "â€”".equals(trimmed)
+                || "Ã¢â‚¬â€".equals(trimmed)
+                || "ï¿½".equals(trimmed)
+                || "�".equals(trimmed)) {
+            return "-";
+        }
+        return value;
+    }
+
     private String toExcelCellValue(String value) {
         if (value == null) {
             return "";
@@ -1059,8 +1115,9 @@ public class ExportRenderService {
 
     private static final class PdfWriter {
         private static final float PAGE_MARGIN = 42f;
-        private static final float PAGE_WIDTH = PDRectangle.A4.getWidth();
-        private static final float PAGE_HEIGHT = PDRectangle.A4.getHeight();
+        private static final PDRectangle PAGE_SIZE = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
+        private static final float PAGE_WIDTH = PAGE_SIZE.getWidth();
+        private static final float PAGE_HEIGHT = PAGE_SIZE.getHeight();
         private static final float CONTENT_WIDTH = PAGE_WIDTH - (PAGE_MARGIN * 2);
 
         private final PDDocument document;
@@ -1074,10 +1131,12 @@ public class ExportRenderService {
 
         private void startMessage(String messageReference, String summaryLine) throws IOException {
             ensureSpace(40f);
+            cursorY -= 4f;
             writeWrapped("Message Ref: " + messageReference, PDType1Font.HELVETICA_BOLD, 12f, true);
             if (summaryLine != null && !summaryLine.isBlank()) {
                 writeWrapped(summaryLine, PDType1Font.HELVETICA, 8.5f, false);
             }
+            cursorY -= 6f;
             drawDivider();
         }
 
@@ -1087,7 +1146,9 @@ public class ExportRenderService {
         }
 
         private void writeSection(SectionBlock section) throws IOException {
+            cursorY -= 4f;
             writeWrapped(section.label(), PDType1Font.HELVETICA_BOLD, 10f, true);
+            cursorY -= 4f;
             if ("raw".equals(section.kind())) {
                 writeWrapped(section.rawText(), PDType1Font.COURIER, 7.5f, false);
                 cursorY -= 6f;
@@ -1111,20 +1172,125 @@ public class ExportRenderService {
                 cursorY -= 6f;
                 return;
             }
-            for (Map<String, String> row : section.rows()) {
-                String line;
-                if ("pair".equals(section.kind())) {
-                    line = stringifyStatic(row.get("field")) + ": " + stringifyStatic(row.get("value"));
-                } else {
-                    List<String> pieces = new ArrayList<>();
-                    for (ExportColumnRequest column : section.columns()) {
-                        pieces.add(column.getLabel() + ": " + stringifyStatic(row.get(column.getKey())));
-                    }
-                    line = String.join(" | ", pieces);
-                }
-                writeWrapped(line, PDType1Font.HELVETICA, 8f, false);
-            }
+            writeTable(section.columns(), section.rows());
             cursorY -= 6f;
+        }
+
+        private void writeTable(List<ExportColumnRequest> columns, List<Map<String, String>> rows) throws IOException {
+            List<ExportColumnRequest> safeColumns = columns == null || columns.isEmpty()
+                    ? List.of(new ExportColumnRequest("value", "Value"))
+                    : columns;
+            List<Map<String, String>> safeRows = rows == null || rows.isEmpty()
+                    ? List.of(Map.of(safeColumns.get(0).getKey(), "-"))
+                    : rows;
+            float[] widths = columnWidths(safeColumns);
+            writeTableHeader(safeColumns, widths);
+            for (Map<String, String> row : safeRows) {
+                float rowHeight = tableRowHeight(safeColumns, widths, row, 7.5f, false);
+                if (cursorY - rowHeight < PAGE_MARGIN) {
+                    newPage();
+                    writeTableHeader(safeColumns, widths);
+                }
+                writeTableRow(safeColumns, widths, row, rowHeight, 7.5f, false);
+            }
+        }
+
+        private float[] columnWidths(List<ExportColumnRequest> columns) {
+            float[] widths = new float[columns.size()];
+            if (columns.size() == 2 && "field".equals(columns.get(0).getKey()) && "value".equals(columns.get(1).getKey())) {
+                widths[0] = CONTENT_WIDTH * 0.34f;
+                widths[1] = CONTENT_WIDTH * 0.66f;
+                return widths;
+            }
+            if (columns.size() == 3 && "tag".equals(columns.get(0).getKey())) {
+                widths[0] = CONTENT_WIDTH * 0.14f;
+                widths[1] = CONTENT_WIDTH * 0.34f;
+                widths[2] = CONTENT_WIDTH * 0.52f;
+                return widths;
+            }
+            float even = CONTENT_WIDTH / columns.size();
+            for (int i = 0; i < columns.size(); i++) {
+                widths[i] = even;
+            }
+            return widths;
+        }
+
+        private void writeTableHeader(List<ExportColumnRequest> columns, float[] widths) throws IOException {
+            float height = tableHeaderHeight(columns, widths);
+            ensureSpace(height + 4f);
+            stream.setNonStrokingColor(new Color(243, 246, 250));
+            stream.addRect(PAGE_MARGIN, cursorY - height, CONTENT_WIDTH, height);
+            stream.fill();
+            stream.setNonStrokingColor(Color.BLACK);
+            stream.setStrokingColor(new Color(209, 216, 226));
+            float x = PAGE_MARGIN;
+            for (int i = 0; i < columns.size(); i++) {
+                stream.addRect(x, cursorY - height, widths[i], height);
+                stream.stroke();
+                writeCellText(columns.get(i).getLabel(), x + 5f, cursorY - 13f, widths[i] - 10f, PDType1Font.HELVETICA_BOLD, 7.5f);
+                x += widths[i];
+            }
+            cursorY -= height;
+        }
+
+        private float tableHeaderHeight(List<ExportColumnRequest> columns, float[] widths) throws IOException {
+            float maxLines = 1f;
+            for (int i = 0; i < columns.size(); i++) {
+                maxLines = Math.max(maxLines, wrapText(columns.get(i).getLabel(), PDType1Font.HELVETICA_BOLD, 7.5f, widths[i] - 10f).size());
+            }
+            return Math.max(20f, (maxLines * 10f) + 8f);
+        }
+
+        private float tableRowHeight(List<ExportColumnRequest> columns, float[] widths, Map<String, String> row, float fontSize, boolean bold) throws IOException {
+            PDType1Font font = bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA;
+            int maxLines = 1;
+            for (int i = 0; i < columns.size(); i++) {
+                String value = stringifyStatic(row.get(columns.get(i).getKey()));
+                maxLines = Math.max(maxLines, wrapText(value, font, fontSize, widths[i] - 10f).size());
+            }
+            return Math.max(22f, (maxLines * (fontSize + 3f)) + 10f);
+        }
+
+        private void writeTableRow(List<ExportColumnRequest> columns,
+                                   float[] widths,
+                                   Map<String, String> row,
+                                   float rowHeight,
+                                   float fontSize,
+                                   boolean bold) throws IOException {
+            stream.setStrokingColor(new Color(226, 232, 240));
+            float x = PAGE_MARGIN;
+            for (int i = 0; i < columns.size(); i++) {
+                stream.addRect(x, cursorY - rowHeight, widths[i], rowHeight);
+                stream.stroke();
+                writeCellText(
+                        stringifyStatic(row.get(columns.get(i).getKey())),
+                        x + 5f,
+                        cursorY - 13f,
+                        widths[i] - 10f,
+                        bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA,
+                        fontSize
+                );
+                x += widths[i];
+            }
+            cursorY -= rowHeight;
+        }
+
+        private void writeCellText(String text,
+                                   float x,
+                                   float y,
+                                   float width,
+                                   PDType1Font font,
+                                   float fontSize) throws IOException {
+            List<String> lines = wrapText(text, font, fontSize, Math.max(24f, width));
+            float lineY = y;
+            for (String line : lines) {
+                stream.beginText();
+                stream.setFont(font, fontSize);
+                stream.newLineAtOffset(x, lineY);
+                stream.showText(line);
+                stream.endText();
+                lineY -= fontSize + 3f;
+            }
         }
 
         private void writeLine(String line, boolean bold) throws IOException {
@@ -1208,7 +1374,7 @@ public class ExportRenderService {
 
         private void newPage() throws IOException {
             closeStream();
-            PDPage page = new PDPage(PDRectangle.A4);
+            PDPage page = new PDPage(PAGE_SIZE);
             document.addPage(page);
             stream = new PDPageContentStream(document, page);
             cursorY = PAGE_HEIGHT - PAGE_MARGIN;
@@ -1227,13 +1393,21 @@ public class ExportRenderService {
 
         private List<String> wrapText(String text, PDType1Font font, float fontSize, float maxWidth) throws IOException {
             List<String> wrapped = new ArrayList<>();
-            String safe = text == null || text.isBlank() ? "—" : text;
+            String safe = cleanStatic(text);
             for (String rawLine : safe.replace("\r", "").split("\n")) {
                 String line = rawLine.isEmpty() ? " " : rawLine;
                 StringBuilder current = new StringBuilder();
                 for (String word : line.split("\\s+")) {
+                    if (textWidth(word, font, fontSize) > maxWidth) {
+                        if (!current.isEmpty()) {
+                            wrapped.add(current.toString());
+                            current = new StringBuilder();
+                        }
+                        wrapped.addAll(splitWordToFit(word, font, fontSize, maxWidth));
+                        continue;
+                    }
                     String candidate = current.isEmpty() ? word : current + " " + word;
-                    float width = font.getStringWidth(candidate) / 1000f * fontSize;
+                    float width = textWidth(candidate, font, fontSize);
                     if (width > maxWidth && !current.isEmpty()) {
                         wrapped.add(current.toString());
                         current = new StringBuilder(word);
@@ -1246,8 +1420,46 @@ public class ExportRenderService {
             return wrapped;
         }
 
+        private List<String> splitWordToFit(String word, PDType1Font font, float fontSize, float maxWidth) throws IOException {
+            List<String> pieces = new ArrayList<>();
+            StringBuilder current = new StringBuilder();
+            for (int i = 0; i < word.length(); i++) {
+                String candidate = current.toString() + word.charAt(i);
+                if (textWidth(candidate, font, fontSize) > maxWidth && !current.isEmpty()) {
+                    pieces.add(current.toString());
+                    current = new StringBuilder(String.valueOf(word.charAt(i)));
+                } else {
+                    current = new StringBuilder(candidate);
+                }
+            }
+            if (!current.isEmpty()) {
+                pieces.add(current.toString());
+            }
+            return pieces.isEmpty() ? List.of("-") : pieces;
+        }
+
+        private float textWidth(String value, PDType1Font font, float fontSize) throws IOException {
+            return font.getStringWidth(value == null ? "" : value) / 1000f * fontSize;
+        }
+
         private static String stringifyStatic(String value) {
-            return value == null ? "" : value;
+            return cleanStatic(value);
+        }
+
+        private static String cleanStatic(String value) {
+            if (value == null) {
+                return "-";
+            }
+            String trimmed = value.trim();
+            if (trimmed.isBlank()
+                    || "—".equals(trimmed)
+                    || "â€”".equals(trimmed)
+                    || "Ã¢â‚¬â€".equals(trimmed)
+                    || "ï¿½".equals(trimmed)
+                    || "�".equals(trimmed)) {
+                return "-";
+            }
+            return value;
         }
 
         private static int parseLevel(String rawLevel) {

@@ -2,8 +2,6 @@ package com.swift.platform.controller;
 
 import com.swift.platform.dto.ApiResponse;
 import com.swift.platform.dto.ReportGenerateRequest;
-import com.swift.platform.dto.ReportHistoryPageResponse;
-import com.swift.platform.dto.ReportHistoryResponse;
 import com.swift.platform.dto.ReportTemplateFormatRequest;
 import com.swift.platform.dto.ReportTemplateRequest;
 import com.swift.platform.dto.ReportTemplateResponse;
@@ -14,18 +12,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -38,6 +36,11 @@ public class ReportController {
     @GetMapping("/templates")
     public ApiResponse<List<ReportTemplateResponse>> templates(HttpServletRequest request) {
         return ApiResponse.ok(reportService.listTemplates(employeeId(request)));
+    }
+
+    @GetMapping("/definitions")
+    public ApiResponse<List<Map<String, Object>>> definitions() {
+        return ApiResponse.ok(reportService.listDefinitions());
     }
 
     @PostMapping("/templates")
@@ -65,61 +68,29 @@ public class ReportController {
         return ApiResponse.ok("Template format updated.", response);
     }
 
-    @PostMapping("/templates/{templateId}/run")
-    public ApiResponse<ReportHistoryResponse> runTemplate(@PathVariable String templateId,
-                                                          HttpServletRequest request) {
-        ReportHistoryResponse response = reportService.runTemplate(employeeId(request), templateId);
-        auditService.log(employeeId(request), "REPORT_TEMPLATE_RUN", templateId, request.getRemoteAddr());
-        return ApiResponse.ok("Report generation started.", response);
-    }
-
     @PostMapping("/generate")
-    public ApiResponse<ReportHistoryResponse> generate(@RequestBody ReportGenerateRequest payload,
-                                                       HttpServletRequest request) {
+    public ResponseEntity<org.springframework.core.io.Resource> generate(@RequestBody ReportGenerateRequest payload,
+                                                                         HttpServletRequest request) {
         try {
-            ReportHistoryResponse response = reportService.generate(employeeId(request), payload);
-            auditService.log(employeeId(request), "REPORT_GENERATE", response.getFileName(), request.getRemoteAddr());
-            return ApiResponse.ok("Report generated.", response);
+            ReportService.ReportDownload download = reportService.generate(employeeId(request), payload);
+            auditService.log(employeeId(request), "REPORT_GENERATE", download.fileName(), request.getRemoteAddr());
+            return downloadResponse(download);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
         }
     }
 
-    @GetMapping("/history")
-    public ApiResponse<ReportHistoryPageResponse> history(@RequestParam(defaultValue = "0") int page,
-                                                          @RequestParam(defaultValue = "10") int size,
-                                                          HttpServletRequest request) {
-        return ApiResponse.ok(reportService.listHistory(employeeId(request), page, size));
-    }
-
-    @PostMapping("/history/refresh")
-    public ApiResponse<ReportHistoryPageResponse> refresh(@RequestParam(defaultValue = "0") int page,
-                                                          @RequestParam(defaultValue = "10") int size,
-                                                          HttpServletRequest request) {
-        auditService.log(employeeId(request), "REPORT_HISTORY_REFRESH", "page=" + page + ", size=" + size, request.getRemoteAddr());
-        return ApiResponse.ok("History refreshed.", reportService.refreshHistory(employeeId(request), page, size));
-    }
-
-    @DeleteMapping("/history/{historyId}")
-    public ApiResponse<Void> deleteHistory(@PathVariable String historyId,
-                                           HttpServletRequest request) {
-        reportService.deleteHistory(employeeId(request), historyId);
-        auditService.log(employeeId(request), "REPORT_HISTORY_DELETE", historyId, request.getRemoteAddr());
-        return ApiResponse.ok("History deleted.", null);
-    }
-
-    @GetMapping("/history/{historyId}/download")
-    public ResponseEntity<org.springframework.core.io.Resource> download(@PathVariable String historyId,
-                                                                         HttpServletRequest request) {
-        ReportService.ReportDownload download;
+    @PostMapping("/preview")
+    public ApiResponse<Map<String, Object>> preview(@RequestBody ReportGenerateRequest payload,
+                                                    HttpServletRequest request) {
         try {
-            download = reportService.download(employeeId(request), historyId);
+            return ApiResponse.ok(reportService.preview(employeeId(request), payload));
         } catch (IllegalArgumentException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
-        } catch (IllegalStateException ex) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
         }
-        auditService.log(employeeId(request), "REPORT_HISTORY_DOWNLOAD", historyId, request.getRemoteAddr());
+    }
+
+    private ResponseEntity<org.springframework.core.io.Resource> downloadResponse(ReportService.ReportDownload download) {
         MediaType mediaType = download.contentType() == null || download.contentType().isBlank()
                 ? MediaType.APPLICATION_OCTET_STREAM
                 : MediaType.parseMediaType(download.contentType());

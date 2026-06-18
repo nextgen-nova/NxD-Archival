@@ -81,6 +81,9 @@ public class AppConfig {
     @Value("${mongo.collection.report-templates:report_templates}")
     private String reportTemplatesCollection;
 
+    @Value("${mongo.collection.report-definitions:report_definitions}")
+    private String reportDefinitionsCollection;
+
     @Value("${mongo.collection.report-history:report_history}")
     private String reportHistoryCollection;
 
