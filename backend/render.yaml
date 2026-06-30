@@ -1,0 +1,13 @@
+services:
+
+  - type: web
+
+    name: nxd-archival-backend
+
+    runtime: java
+
+    rootDir: backend
+
+    buildCommand: mvn clean package
+
+    startCommand: java -jar target/swift-backend-2.0.0.jar
