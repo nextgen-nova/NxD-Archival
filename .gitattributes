@@ -1,0 +1,4 @@
+frontend/ampdb_payloads_generated.json filter=lfs diff=lfs merge=lfs -text
+frontend/ampdb_messages_generated.json filter=lfs diff=lfs merge=lfs -text
+outputs/mxcrt.xsd.json filter=lfs diff=lfs merge=lfs -text
+outputs/mxcrt.xsd2.json filter=lfs diff=lfs merge=lfs -text

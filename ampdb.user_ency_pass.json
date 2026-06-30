@@ -1,0 +1,210 @@
+[{
+  "_id": {
+    "$oid": "69e396f92f4327448117af0e"
+  },
+  "employeeId": "ADMIN001",
+  "password": "12345678",
+  "role": "ADMIN",
+  "name": "Primary Admin",
+  "email": "admin@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-18T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-06-16T14:13:07.181Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-27T07:31:35.459Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af0f"
+  },
+  "employeeId": "ADMIN002",
+  "password": "Admin@123",
+  "role": "ADMIN",
+  "name": "Operations Admin",
+  "email": "ops.admin@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-19T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-06-06T01:01:53.635Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-19T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af10"
+  },
+  "employeeId": "EMP001",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Shanini Bala",
+  "email": "shaninibala@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-20T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-26T09:15:22.005Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-20T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af11"
+  },
+  "employeeId": "EMP002",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Rahul Kumar",
+  "email": "rahul.kumar@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-21T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-25T14:05:19.450Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-21T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af12"
+  },
+  "employeeId": "EMP003",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Amit Joseph",
+  "email": "amit.joseph@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-22T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-18T11:32:44.901Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-27T07:49:59.336Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af13"
+  },
+  "employeeId": "EMP004",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "John Doe",
+  "email": "john.doe@swift.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-23T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-24T16:20:02.332Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-23T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af14"
+  },
+  "employeeId": "EMP005",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Priya Nair",
+  "email": "priya.nair@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-24T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-26T07:55:41.230Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-24T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af15"
+  },
+  "employeeId": "EMP006",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Meera Suresh",
+  "email": "meera.suresh@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-25T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-23T10:10:10.010Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-25T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af16"
+  },
+  "employeeId": "EMP007",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Karthik Raj",
+  "email": "karthik.raj@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-26T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-12T05:44:18.500Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-27T07:50:01.687Z"
+  },
+  "_class": "com.swift.platform.model.User"
+},
+{
+  "_id": {
+    "$oid": "69e396f92f4327448117af17"
+  },
+  "employeeId": "EMP008",
+  "password": "User@123",
+  "role": "EMPLOYEE",
+  "name": "Lavanya Devi",
+  "email": "lavanya.devi@example.com",
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-27T00:00:00.000Z"
+  },
+  "lastLogin": {
+    "$date": "2026-05-26T06:30:00.000Z"
+  },
+  "updatedAt": {
+    "$date": "2026-04-27T00:00:00.000Z"
+  },
+  "_class": "com.swift.platform.model.User"
+}]

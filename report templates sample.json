@@ -1,0 +1,2276 @@
+[{
+  "_id": "report_definition:MRM002",
+  "reportCode": "MRM002",
+  "reportName": "MONTHLY TRANSACTION TOTAL OF ALL DEPARTMENTS",
+  "displayName": "MRM002 - Monthly Transaction Total of All Departments",
+  "category": "Custom Reports",
+  "collection": "messages",
+  "enabled": true,
+  "layout": {
+    "systemTitle": "NXT SWIFT SYSTEM",
+    "orientation": "LANDSCAPE",
+    "pageSize": "A4",
+    "showCriteria": true,
+    "showRunDate": true,
+    "showPageNumber": true,
+    "showEndOfReport": true
+  },
+  "filters": [
+    {
+      "name": "fromDate",
+      "label": "From Date",
+      "type": "datetime",
+      "required": true,
+      "dbPath": "header.dateCreated",
+      "operator": "$gte"
+    },
+    {
+      "name": "toDate",
+      "label": "To Date",
+      "type": "datetime",
+      "required": true,
+      "dbPath": "header.dateCreated",
+      "operator": "$lte"
+    },
+    {
+      "name": "department",
+      "label": "Department",
+      "type": "text",
+      "dbPaths": [
+        "header.owner",
+        "owner",
+        "department",
+        "ownerUnit"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "messageFormat",
+      "label": "Message Format",
+      "type": "select",
+      "values": [
+        "All",
+        "MT Only",
+        "MX Only"
+      ],
+      "dbPath": "messageFamily",
+      "operator": "$eq"
+    },
+    {
+      "name": "messageType",
+      "label": "Message Type",
+      "type": "text",
+      "dbPaths": [
+        "header.messageTypeCode",
+        "messageType",
+        "messageTypeCode"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "currency",
+      "label": "Currency",
+      "type": "text",
+      "dbPaths": [
+        "extractedFields.currency",
+        "currency"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "status",
+      "label": "Status",
+      "type": "select",
+      "values": [
+        "Any",
+        "Success",
+        "Failed",
+        "Pending",
+        "Repaired",
+        "Rejected",
+        "Cancelled"
+      ],
+      "dbPaths": [
+        "status.current",
+        "status.reason",
+        "status.phase",
+        "status.action"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "direction",
+      "label": "Direction",
+      "type": "select",
+      "values": [
+        "All",
+        "Inbound",
+        "Outbound"
+      ],
+      "dbPaths": [
+        "protocolParams.FIN.ApplicationHeaderBlock.DirectionID",
+        "header.direction",
+        "direction"
+      ],
+      "operator": "$direction"
+    },
+    {
+      "name": "sender",
+      "label": "Sender BIC",
+      "type": "text",
+      "dbPaths": [
+        "header.senderAddress",
+        "protocolParams.requestor",
+        "protocolParams.requester"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "receiver",
+      "label": "Receiver BIC",
+      "type": "text",
+      "dbPaths": [
+        "header.receiverAddress",
+        "protocolParams.responder"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "branch",
+      "label": "Branch",
+      "type": "text",
+      "dbPaths": [
+        "header.backendChannel",
+        "header.networkChannel",
+        "backendChannel",
+        "networkChannel"
+      ],
+      "operator": "$regex"
+    }
+  ],
+  "baseMatch": {
+    "messageFamily": {
+      "$in": [
+        "MT",
+        "MX"
+      ]
+    },
+    "$or": [
+      {
+        "header.messageTypeCode": {
+          "$exists": true
+        }
+      },
+      {
+        "messageType": {
+          "$exists": true
+        }
+      },
+      {
+        "messageTypeCode": {
+          "$exists": true
+        }
+      }
+    ]
+  },
+  "commonStages": [
+    {
+      "$lookup": {
+        "from": "payloads",
+        "localField": "messageReference",
+        "foreignField": "messageReference",
+        "as": "payloadDocs"
+      }
+    },
+    {
+      "$addFields": {
+        "payloadDoc": {
+          "$arrayElemAt": [
+            "$payloadDocs",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "departmentName": {
+          "$ifNull": [
+            "$header.owner",
+            {
+              "$ifNull": [
+                "$owner",
+                {
+                  "$ifNull": [
+                    "$department",
+                    {
+                      "$ifNull": [
+                        "$ownerUnit",
+                        "None"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "messageTypeFinal": {
+          "$ifNull": [
+            "$header.messageTypeCode",
+            {
+              "$ifNull": [
+                "$messageType",
+                {
+                  "$ifNull": [
+                    "$messageTypeCode",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "messageFamilyFinal": {
+          "$ifNull": [
+            "$messageFamily",
+            "-"
+          ]
+        },
+        "currencyFinal": {
+          "$ifNull": [
+            "$extractedFields.currency",
+            {
+              "$ifNull": [
+                "$payloadDoc.extractedFields.currency",
+                {
+                  "$ifNull": [
+                    "$payloadDoc.mxExtractedFields.currency",
+                    {
+                      "$ifNull": [
+                        "$payloadDoc.mtExtractedFields.currency",
+                        {
+                          "$ifNull": [
+                            "$currency",
+                            "N/A"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "amountFinal": {
+          "$convert": {
+            "input": {
+              "$ifNull": [
+                "$extractedFields.amount",
+                {
+                  "$ifNull": [
+                    "$payloadDoc.extractedFields.amount",
+                    {
+                      "$ifNull": [
+                        "$payloadDoc.mxExtractedFields.amount",
+                        {
+                          "$ifNull": [
+                            "$payloadDoc.mtExtractedFields.amount",
+                            {
+                              "$ifNull": [
+                                "$amount",
+                                0
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "to": "double",
+            "onError": 0,
+            "onNull": 0
+          }
+        },
+        "directionFinal": {
+          "$ifNull": [
+            "$protocolParams.FIN.ApplicationHeaderBlock.DirectionID",
+            {
+              "$ifNull": [
+                "$header.direction",
+                {
+                  "$ifNull": [
+                    "$direction",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "statusRaw": {
+          "$concat": [
+            {
+              "$ifNull": [
+                "$status.current",
+                ""
+              ]
+            },
+            " ",
+            {
+              "$ifNull": [
+                "$status.reason",
+                ""
+              ]
+            },
+            " ",
+            {
+              "$ifNull": [
+                "$status.phase",
+                ""
+              ]
+            },
+            " ",
+            {
+              "$ifNull": [
+                "$status.action",
+                ""
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "statusBucket": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "reject",
+                    "options": "i"
+                  }
+                },
+                "then": "Rejected"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "cancel",
+                    "options": "i"
+                  }
+                },
+                "then": "Cancelled"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "repair",
+                    "options": "i"
+                  }
+                },
+                "then": "Repaired"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "pend|wait|progress",
+                    "options": "i"
+                  }
+                },
+                "then": "Pending"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "fail|nack|nak|error",
+                    "options": "i"
+                  }
+                },
+                "then": "Failed"
+              }
+            ],
+            "default": "Success"
+          }
+        },
+        "isDebit": {
+          "$or": [
+            {
+              "$eq": [
+                "$directionFinal",
+                "O"
+              ]
+            },
+            {
+              "$regexMatch": {
+                "input": "$directionFinal",
+                "regex": "out",
+                "options": "i"
+              }
+            }
+          ]
+        },
+        "isMt": {
+          "$or": [
+            {
+              "$eq": [
+                "$messageFamilyFinal",
+                "MT"
+              ]
+            },
+            {
+              "$regexMatch": {
+                "input": "$messageTypeFinal",
+                "regex": "^MT|^[0-9]{3}$",
+                "options": "i"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "reportSummary",
+      "title": "Report Summary",
+      "type": "keyValue",
+      "columns": [
+        "Field",
+        "Value"
+      ],
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "totalDepartmentsSet": {
+              "$addToSet": "$departmentName"
+            },
+            "totalTransactions": {
+              "$sum": 1
+            },
+            "totalSuccessfulTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "totalFailedTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "totalPendingTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Pending"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "grandTotalAmount": {
+              "$sum": "$amountFinal"
+            },
+            "currencySet": {
+              "$addToSet": "$currencyFinal"
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Report Name": "MONTHLY TRANSACTION TOTAL OF ALL DEPARTMENTS",
+            "Report Code": "MRM002",
+            "Report Month": "{{reportMonth}}",
+            "From Date": "{{fromDateDisplay}}",
+            "To Date": "{{toDateDisplay}}",
+            "Generated Date & Time": "{{generatedDateTime}}",
+            "Generated By": "{{generatedBy}}",
+            "Total Departments": {
+              "$size": "$totalDepartmentsSet"
+            },
+            "Total Transactions": "$totalTransactions",
+            "Total Successful Transactions": "$totalSuccessfulTransactions",
+            "Total Failed Transactions": "$totalFailedTransactions",
+            "Total Pending Transactions": "$totalPendingTransactions",
+            "Grand Total Amount": "$grandTotalAmount",
+            "Currency": {
+              "$cond": [
+                {
+                  "$eq": [
+                    {
+                      "$size": "$currencySet"
+                    },
+                    1
+                  ]
+                },
+                {
+                  "$arrayElemAt": [
+                    "$currencySet",
+                    0
+                  ]
+                },
+                "Multiple"
+              ]
+            }
+          }
+        }
+      ],
+      "fields": [
+        {
+          "label": "Report Name",
+          "field": "Report Name"
+        },
+        {
+          "label": "Report Code",
+          "field": "Report Code"
+        },
+        {
+          "label": "Report Month",
+          "field": "Report Month"
+        },
+        {
+          "label": "From Date",
+          "field": "From Date"
+        },
+        {
+          "label": "To Date",
+          "field": "To Date"
+        },
+        {
+          "label": "Generated Date & Time",
+          "field": "Generated Date & Time"
+        },
+        {
+          "label": "Generated By",
+          "field": "Generated By"
+        },
+        {
+          "label": "Total Departments",
+          "field": "Total Departments"
+        },
+        {
+          "label": "Total Transactions",
+          "field": "Total Transactions"
+        },
+        {
+          "label": "Total Successful Transactions",
+          "field": "Total Successful Transactions"
+        },
+        {
+          "label": "Total Failed Transactions",
+          "field": "Total Failed Transactions"
+        },
+        {
+          "label": "Total Pending Transactions",
+          "field": "Total Pending Transactions"
+        },
+        {
+          "label": "Grand Total Amount",
+          "field": "Grand Total Amount",
+          "format": "amount"
+        },
+        {
+          "label": "Currency",
+          "field": "Currency"
+        }
+      ]
+    },
+    {
+      "id": "departmentSummary",
+      "title": "Department-wise Summary",
+      "type": "table",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": {
+              "department": "$departmentName",
+              "currency": "$currencyFinal"
+            },
+            "totalTransactions": {
+              "$sum": 1
+            },
+            "successfulTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "failedTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "pendingTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Pending"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "repairedTransactions": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Repaired"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "totalDebitAmount": {
+              "$sum": {
+                "$cond": [
+                  "$isDebit",
+                  "$amountFinal",
+                  0
+                ]
+              }
+            },
+            "totalCreditAmount": {
+              "$sum": {
+                "$cond": [
+                  "$isDebit",
+                  0,
+                  "$amountFinal"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Department Name": "$_id.department",
+            "Total Transactions": "$totalTransactions",
+            "Successful Transactions": "$successfulTransactions",
+            "Failed Transactions": "$failedTransactions",
+            "Pending Transactions": "$pendingTransactions",
+            "Repaired Transactions": "$repairedTransactions",
+            "Total Debit Amount": "$totalDebitAmount",
+            "Total Credit Amount": "$totalCreditAmount",
+            "Net Amount": {
+              "$subtract": [
+                "$totalCreditAmount",
+                "$totalDebitAmount"
+              ]
+            },
+            "Currency": "$_id.currency"
+          }
+        },
+        {
+          "$sort": {
+            "Department Name": 1,
+            "Currency": 1
+          }
+        }
+      ],
+      "columns": [
+        "Department Name",
+        "Total Transactions",
+        "Successful Transactions",
+        "Failed Transactions",
+        "Pending Transactions",
+        "Repaired Transactions",
+        "Total Debit Amount",
+        "Total Credit Amount",
+        "Net Amount",
+        "Currency"
+      ]
+    },
+    {
+      "id": "mtBreakdown",
+      "title": "MT Message Breakdown",
+      "type": "table",
+      "pipeline": [
+        {
+          "$match": {
+            "isMt": true
+          }
+        },
+        {
+          "$group": {
+            "_id": {
+              "messageType": "$messageTypeFinal",
+              "department": "$departmentName",
+              "currency": "$currencyFinal"
+            },
+            "transactionCount": {
+              "$sum": 1
+            },
+            "successCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "failedCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "totalAmount": {
+              "$sum": "$amountFinal"
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "MT Message Type": "$_id.messageType",
+            "Message Description": {
+              "$switch": {
+                "branches": [
+                  {
+                    "case": {
+                      "$in": [
+                        "$_id.messageType",
+                        [
+                          "MT103",
+                          "103"
+                        ]
+                      ]
+                    },
+                    "then": "Customer Credit Transfer"
+                  },
+                  {
+                    "case": {
+                      "$in": [
+                        "$_id.messageType",
+                        [
+                          "MT202",
+                          "202"
+                        ]
+                      ]
+                    },
+                    "then": "Financial Institution Transfer"
+                  },
+                  {
+                    "case": {
+                      "$in": [
+                        "$_id.messageType",
+                        [
+                          "MT199",
+                          "199"
+                        ]
+                      ]
+                    },
+                    "then": "Free Format Message"
+                  },
+                  {
+                    "case": {
+                      "$in": [
+                        "$_id.messageType",
+                        [
+                          "MT940",
+                          "940"
+                        ]
+                      ]
+                    },
+                    "then": "Customer Statement"
+                  },
+                  {
+                    "case": {
+                      "$in": [
+                        "$_id.messageType",
+                        [
+                          "MT950",
+                          "950"
+                        ]
+                      ]
+                    },
+                    "then": "Statement Message"
+                  }
+                ],
+                "default": "SWIFT MT Message"
+              }
+            },
+            "Department": "$_id.department",
+            "Transaction Count": "$transactionCount",
+            "Success Count": "$successCount",
+            "Failed Count": "$failedCount",
+            "Total Amount": "$totalAmount",
+            "Currency": "$_id.currency"
+          }
+        },
+        {
+          "$sort": {
+            "MT Message Type": 1,
+            "Department": 1,
+            "Currency": 1
+          }
+        }
+      ],
+      "columns": [
+        "MT Message Type",
+        "Message Description",
+        "Department",
+        "Transaction Count",
+        "Success Count",
+        "Failed Count",
+        "Total Amount",
+        "Currency"
+      ]
+    },
+    {
+      "id": "mxBreakdown",
+      "title": "MX Message Breakdown",
+      "type": "table",
+      "pipeline": [
+        {
+          "$match": {
+            "isMt": false
+          }
+        },
+        {
+          "$group": {
+            "_id": {
+              "messageType": "$messageTypeFinal",
+              "department": "$departmentName",
+              "currency": "$currencyFinal"
+            },
+            "transactionCount": {
+              "$sum": 1
+            },
+            "successCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "failedCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "totalAmount": {
+              "$sum": "$amountFinal"
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "MX Message Type": "$_id.messageType",
+            "Message Description": {
+              "$switch": {
+                "branches": [
+                  {
+                    "case": {
+                      "$regexMatch": {
+                        "input": "$_id.messageType",
+                        "regex": "pacs.008",
+                        "options": "i"
+                      }
+                    },
+                    "then": "FI To FI Customer Credit Transfer"
+                  },
+                  {
+                    "case": {
+                      "$regexMatch": {
+                        "input": "$_id.messageType",
+                        "regex": "pacs.009",
+                        "options": "i"
+                      }
+                    },
+                    "then": "Financial Institution Credit Transfer"
+                  },
+                  {
+                    "case": {
+                      "$regexMatch": {
+                        "input": "$_id.messageType",
+                        "regex": "pacs.002",
+                        "options": "i"
+                      }
+                    },
+                    "then": "Payment Status Report"
+                  },
+                  {
+                    "case": {
+                      "$regexMatch": {
+                        "input": "$_id.messageType",
+                        "regex": "camt.053",
+                        "options": "i"
+                      }
+                    },
+                    "then": "Bank To Customer Statement"
+                  },
+                  {
+                    "case": {
+                      "$regexMatch": {
+                        "input": "$_id.messageType",
+                        "regex": "camt.056",
+                        "options": "i"
+                      }
+                    },
+                    "then": "Payment Cancellation Request"
+                  }
+                ],
+                "default": "SWIFT MX Message"
+              }
+            },
+            "Department": "$_id.department",
+            "Transaction Count": "$transactionCount",
+            "Success Count": "$successCount",
+            "Failed Count": "$failedCount",
+            "Total Amount": "$totalAmount",
+            "Currency": "$_id.currency"
+          }
+        },
+        {
+          "$sort": {
+            "MX Message Type": 1,
+            "Department": 1,
+            "Currency": 1
+          }
+        }
+      ],
+      "columns": [
+        "MX Message Type",
+        "Message Description",
+        "Department",
+        "Transaction Count",
+        "Success Count",
+        "Failed Count",
+        "Total Amount",
+        "Currency"
+      ]
+    },
+    {
+      "id": "currencySummary",
+      "title": "Currency-wise Summary",
+      "type": "table",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": "$currencyFinal",
+            "totalTransactions": {
+              "$sum": 1
+            },
+            "debitCount": {
+              "$sum": {
+                "$cond": [
+                  "$isDebit",
+                  1,
+                  0
+                ]
+              }
+            },
+            "creditCount": {
+              "$sum": {
+                "$cond": [
+                  "$isDebit",
+                  0,
+                  1
+                ]
+              }
+            },
+            "totalDebitAmount": {
+              "$sum": {
+                "$cond": [
+                  "$isDebit",
+                  "$amountFinal",
+                  0
+                ]
+              }
+            },
+            "totalCreditAmount": {
+              "$sum": {
+                "$cond": [
+                  "$isDebit",
+                  0,
+                  "$amountFinal"
+                ]
+              }
+            },
+            "successCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "failedCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Currency": "$_id",
+            "Total Transactions": "$totalTransactions",
+            "Debit Count": "$debitCount",
+            "Credit Count": "$creditCount",
+            "Total Debit Amount": "$totalDebitAmount",
+            "Total Credit Amount": "$totalCreditAmount",
+            "Net Amount": {
+              "$subtract": [
+                "$totalCreditAmount",
+                "$totalDebitAmount"
+              ]
+            },
+            "Success Count": "$successCount",
+            "Failed Count": "$failedCount"
+          }
+        },
+        {
+          "$sort": {
+            "Currency": 1
+          }
+        }
+      ],
+      "columns": [
+        "Currency",
+        "Total Transactions",
+        "Debit Count",
+        "Credit Count",
+        "Total Debit Amount",
+        "Total Credit Amount",
+        "Net Amount",
+        "Success Count",
+        "Failed Count"
+      ]
+    },
+    {
+      "id": "statusSummary",
+      "title": "Status-wise Summary",
+      "type": "table",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": "$statusBucket",
+            "totalCount": {
+              "$sum": 1
+            },
+            "totalAmount": {
+              "$sum": "$amountFinal"
+            },
+            "departments": {
+              "$addToSet": "$departmentName"
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Status": "$_id",
+            "Total Count": "$totalCount",
+            "Percentage": "$totalCount",
+            "Total Amount": "$totalAmount",
+            "Department Count": {
+              "$size": "$departments"
+            }
+          }
+        },
+        {
+          "$sort": {
+            "Status": 1
+          }
+        }
+      ],
+      "columns": [
+        "Status",
+        "Total Count",
+        "Percentage",
+        "Total Amount",
+        "Department Count"
+      ],
+      "fixedStatusRows": [
+        "Success",
+        "Failed",
+        "Pending",
+        "Repaired",
+        "Rejected",
+        "Cancelled"
+      ]
+    }
+  ],
+  "collections": {
+    "messages": "messages",
+    "payloads": "payloads",
+    "rawCopies": "rawCopies"
+  }
+},
+{
+  "_id": "report_definition:SWD003",
+  "reportCode": "SWD003",
+  "reportName": "DETAILS OF INCOMING MESSAGES",
+  "displayName": "SWD003 - Details of Incoming Messages",
+  "category": "Custom Reports",
+  "collection": "messages",
+  "collections": {
+    "messages": "messages",
+    "payloads": "payloads",
+    "rawCopies": "rawCopies"
+  },
+  "enabled": true,
+  "layout": {
+    "systemTitle": "NXT SWIFT SYSTEM",
+    "orientation": "LANDSCAPE",
+    "pageSize": "A4",
+    "showCriteria": true,
+    "showRunDate": true,
+    "showPageNumber": true,
+    "showEndOfReport": true
+  },
+  "filters": [
+    {
+      "name": "fromDate",
+      "label": "From Date",
+      "type": "datetime",
+      "required": true,
+      "dbPath": "header.dateCreated",
+      "operator": "$gte"
+    },
+    {
+      "name": "toDate",
+      "label": "To Date",
+      "type": "datetime",
+      "required": true,
+      "dbPath": "header.dateCreated",
+      "operator": "$lte"
+    },
+    {
+      "name": "bankName",
+      "label": "Bank Name",
+      "type": "text",
+      "dbPaths": [
+        "header.owner",
+        "owner",
+        "department",
+        "ownerUnit",
+        "header.senderAddress",
+        "header.receiverAddress"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "messageFormat",
+      "label": "Message Format",
+      "type": "select",
+      "values": [
+        "All - MT & MX",
+        "MT Only",
+        "MX Only"
+      ],
+      "dbPath": "messageFamily",
+      "operator": "$eq"
+    },
+    {
+      "name": "messageType",
+      "label": "Message Type",
+      "type": "text",
+      "dbPaths": [
+        "header.messageTypeCode",
+        "messageType",
+        "messageTypeCode"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "sender",
+      "label": "Sender BIC",
+      "type": "text",
+      "dbPaths": [
+        "header.senderAddress",
+        "protocolParams.requestor",
+        "protocolParams.requester",
+        "protocolParams.FIN.BasicHeaderBlock.LogicalTerminalAddress"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "receiver",
+      "label": "Receiver BIC",
+      "type": "text",
+      "dbPaths": [
+        "header.receiverAddress",
+        "protocolParams.responder",
+        "protocolParams.FIN.ApplicationHeaderBlock.ReceiversAddress"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "currency",
+      "label": "Currency",
+      "type": "text",
+      "dbPaths": [
+        "extractedFields.currency",
+        "payloadDoc.extractedFields.currency",
+        "payloadDoc.mxExtractedFields.currency",
+        "currency"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "status",
+      "label": "Status",
+      "type": "select",
+      "values": [
+        "Any",
+        "Success",
+        "Failed",
+        "Pending",
+        "Repaired",
+        "Rejected",
+        "Cancelled"
+      ],
+      "dbPaths": [
+        "status.current",
+        "status.reason",
+        "status.phase",
+        "status.action"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "department",
+      "label": "Department",
+      "type": "text",
+      "dbPaths": [
+        "header.owner",
+        "owner",
+        "department",
+        "ownerUnit"
+      ],
+      "operator": "$regex"
+    },
+    {
+      "name": "reference",
+      "label": "Reference",
+      "type": "text",
+      "dbPaths": [
+        "messageReference",
+        "header.messageReference",
+        "header.transactionReference",
+        "transactionReference",
+        "protocolParams.userReference"
+      ],
+      "operator": "$regex"
+    }
+  ],
+  "baseMatch": {
+    "messageFamily": {
+      "$in": [
+        "MT",
+        "MX"
+      ]
+    },
+    "header.direction": {
+      "$regularExpression": {
+        "pattern": "^(INPUT|INCOMING|INBOUND)$",
+        "options": "i"
+      }
+    }
+  },
+  "commonStages": [
+    {
+      "$lookup": {
+        "from": "payloads",
+        "localField": "messageReference",
+        "foreignField": "messageReference",
+        "as": "payloadDocs"
+      }
+    },
+    {
+      "$addFields": {
+        "payloadDoc": {
+          "$arrayElemAt": [
+            "$payloadDocs",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "messageReferenceFinal": {
+          "$ifNull": [
+            "$header.messageReference",
+            {
+              "$ifNull": [
+                "$messageReference",
+                "-"
+              ]
+            }
+          ]
+        },
+        "transactionReferenceFinal": {
+          "$ifNull": [
+            "$header.transactionReference",
+            {
+              "$ifNull": [
+                "$transactionReference",
+                {
+                  "$ifNull": [
+                    "$extractedFields.transactionReference",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "userReferenceFinal": {
+          "$ifNull": [
+            "$protocolParams.userReference",
+            {
+              "$ifNull": [
+                "$protocolParams.mur",
+                "-"
+              ]
+            }
+          ]
+        },
+        "messageTypeFinal": {
+          "$ifNull": [
+            "$header.messageTypeCode",
+            {
+              "$ifNull": [
+                "$messageType",
+                {
+                  "$ifNull": [
+                    "$messageTypeCode",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "messageFamilyFinal": {
+          "$ifNull": [
+            "$messageFamily",
+            "-"
+          ]
+        },
+        "senderFinal": {
+          "$ifNull": [
+            "$header.senderAddress",
+            {
+              "$ifNull": [
+                "$protocolParams.requester",
+                {
+                  "$ifNull": [
+                    "$protocolParams.requestor",
+                    {
+                      "$ifNull": [
+                        "$protocolParams.FIN.BasicHeaderBlock.LogicalTerminalAddress",
+                        "-"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "receiverFinal": {
+          "$ifNull": [
+            "$header.receiverAddress",
+            {
+              "$ifNull": [
+                "$protocolParams.responder",
+                {
+                  "$ifNull": [
+                    "$protocolParams.FIN.ApplicationHeaderBlock.ReceiversAddress",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "logicalTerminalFinal": {
+          "$ifNull": [
+            "$protocolParams.logicalTerminal",
+            {
+              "$ifNull": [
+                "$protocolParams.FIN.BasicHeaderBlock.LogicalTerminalAddress",
+                "$header.senderAddress"
+              ]
+            }
+          ]
+        },
+        "sessionNumberFinal": {
+          "$ifNull": [
+            "$protocolParams.sessionNumber",
+            {
+              "$ifNull": [
+                "$protocolParams.FIN.BasicHeaderBlock.SessionNumber",
+                "-"
+              ]
+            }
+          ]
+        },
+        "sequenceNumberFinal": {
+          "$ifNull": [
+            "$protocolParams.sequenceNumber",
+            {
+              "$ifNull": [
+                "$protocolParams.FIN.BasicHeaderBlock.SequenceNumber",
+                "-"
+              ]
+            }
+          ]
+        },
+        "snSeqFinal": {
+          "$concat": [
+            {
+              "$toString": {
+                "$ifNull": [
+                  "$protocolParams.sessionNumber",
+                  {
+                    "$ifNull": [
+                      "$protocolParams.FIN.BasicHeaderBlock.SessionNumber",
+                      "-"
+                    ]
+                  }
+                ]
+              }
+            },
+            "/",
+            {
+              "$toString": {
+                "$ifNull": [
+                  "$protocolParams.sequenceNumber",
+                  {
+                    "$ifNull": [
+                      "$protocolParams.FIN.BasicHeaderBlock.SequenceNumber",
+                      "-"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "directionFinal": {
+          "$ifNull": [
+            "$header.direction",
+            "-"
+          ]
+        },
+        "departmentName": {
+          "$ifNull": [
+            "$header.owner",
+            {
+              "$ifNull": [
+                "$owner",
+                {
+                  "$ifNull": [
+                    "$department",
+                    {
+                      "$ifNull": [
+                        "$ownerUnit",
+                        "None"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "currencyFinal": {
+          "$ifNull": [
+            "$extractedFields.currency",
+            {
+              "$ifNull": [
+                "$payloadDoc.extractedFields.currency",
+                {
+                  "$ifNull": [
+                    "$payloadDoc.mxExtractedFields.currency",
+                    {
+                      "$ifNull": [
+                        "$payloadDoc.mtExtractedFields.currency",
+                        {
+                          "$ifNull": [
+                            "$currency",
+                            "N/A"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "amountFinal": {
+          "$convert": {
+            "input": {
+              "$ifNull": [
+                "$extractedFields.amount",
+                {
+                  "$ifNull": [
+                    "$payloadDoc.extractedFields.amount",
+                    {
+                      "$ifNull": [
+                        "$payloadDoc.mxExtractedFields.amount",
+                        {
+                          "$ifNull": [
+                            "$payloadDoc.mtExtractedFields.amount",
+                            {
+                              "$ifNull": [
+                                "$amount",
+                                0
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "to": "double",
+            "onError": 0,
+            "onNull": 0
+          }
+        },
+        "valueDateFinal": {
+          "$ifNull": [
+            "$extractedFields.valueDate",
+            {
+              "$ifNull": [
+                "$payloadDoc.extractedFields.valueDate",
+                {
+                  "$ifNull": [
+                    "$payloadDoc.mxExtractedFields.valueDate",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "uetrFinal": {
+          "$ifNull": [
+            "$extractedFields.uetr",
+            {
+              "$ifNull": [
+                "$payloadDoc.mxExtractedFields.UETR",
+                {
+                  "$ifNull": [
+                    "$payloadDoc.mxExtractedFields.uetr",
+                    "-"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "backendChannelFinal": {
+          "$ifNull": [
+            "$header.backendChannel",
+            {
+              "$ifNull": [
+                "$backendChannel",
+                "-"
+              ]
+            }
+          ]
+        },
+        "networkChannelFinal": {
+          "$ifNull": [
+            "$header.networkChannel",
+            {
+              "$ifNull": [
+                "$networkChannel",
+                "-"
+              ]
+            }
+          ]
+        },
+        "statusRaw": {
+          "$concat": [
+            {
+              "$ifNull": [
+                "$status.current",
+                ""
+              ]
+            },
+            " ",
+            {
+              "$ifNull": [
+                "$status.reason",
+                ""
+              ]
+            },
+            " ",
+            {
+              "$ifNull": [
+                "$status.phase",
+                ""
+              ]
+            },
+            " ",
+            {
+              "$ifNull": [
+                "$status.action",
+                ""
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "statusBucket": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "reject",
+                    "options": "i"
+                  }
+                },
+                "then": "Rejected"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "cancel",
+                    "options": "i"
+                  }
+                },
+                "then": "Cancelled"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "repair",
+                    "options": "i"
+                  }
+                },
+                "then": "Repaired"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "pend|wait|progress",
+                    "options": "i"
+                  }
+                },
+                "then": "Pending"
+              },
+              {
+                "case": {
+                  "$regexMatch": {
+                    "input": "$statusRaw",
+                    "regex": "fail|nack|nak|error",
+                    "options": "i"
+                  }
+                },
+                "then": "Failed"
+              }
+            ],
+            "default": "Success"
+          }
+        },
+        "nackFlag": {
+          "$cond": [
+            {
+              "$regexMatch": {
+                "input": "$statusRaw",
+                "regex": "nack|nak|reject|fail",
+                "options": "i"
+              }
+            },
+            "Y",
+            "N"
+          ]
+        },
+        "mirCompatibleRef": {
+          "$concat": [
+            "$logicalTerminalFinal",
+            "/",
+            {
+              "$toString": "$sessionNumberFinal"
+            },
+            "/",
+            {
+              "$toString": "$sequenceNumberFinal"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "reportSummary",
+      "title": "Report Summary",
+      "type": "keyValue",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "totalMessages": {
+              "$sum": 1
+            },
+            "totalDepartmentsSet": {
+              "$addToSet": "$departmentName"
+            },
+            "currencySet": {
+              "$addToSet": "$currencyFinal"
+            },
+            "totalAmount": {
+              "$sum": "$amountFinal"
+            },
+            "successCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "failedCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "pendingCount": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Pending"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Report Name": "DETAILS OF INCOMING MESSAGES",
+            "Report Code": "SWD003",
+            "From Date": "{{fromDateDisplay}}",
+            "To Date": "{{toDateDisplay}}",
+            "Generated Date & Time": "{{generatedDateTime}}",
+            "Generated By": "{{generatedBy}}",
+            "Direction": "Incoming",
+            "Total Messages": "$totalMessages",
+            "Total Departments": {
+              "$size": "$totalDepartmentsSet"
+            },
+            "Successful Messages": "$successCount",
+            "Failed Messages": "$failedCount",
+            "Pending Messages": "$pendingCount",
+            "Total Amount": "$totalAmount",
+            "Currency": {
+              "$cond": [
+                {
+                  "$eq": [
+                    {
+                      "$size": "$currencySet"
+                    },
+                    1
+                  ]
+                },
+                {
+                  "$arrayElemAt": [
+                    "$currencySet",
+                    0
+                  ]
+                },
+                "Multiple"
+              ]
+            }
+          }
+        }
+      ],
+      "fields": [
+        {
+          "label": "Report Name",
+          "field": "Report Name"
+        },
+        {
+          "label": "Report Code",
+          "field": "Report Code"
+        },
+        {
+          "label": "From Date",
+          "field": "From Date"
+        },
+        {
+          "label": "To Date",
+          "field": "To Date"
+        },
+        {
+          "label": "Generated Date & Time",
+          "field": "Generated Date & Time"
+        },
+        {
+          "label": "Generated By",
+          "field": "Generated By"
+        },
+        {
+          "label": "Direction",
+          "field": "Direction"
+        },
+        {
+          "label": "Total Messages",
+          "field": "Total Messages"
+        },
+        {
+          "label": "Total Departments",
+          "field": "Total Departments"
+        },
+        {
+          "label": "Successful Messages",
+          "field": "Successful Messages"
+        },
+        {
+          "label": "Failed Messages",
+          "field": "Failed Messages"
+        },
+        {
+          "label": "Pending Messages",
+          "field": "Pending Messages"
+        },
+        {
+          "label": "Total Amount",
+          "field": "Total Amount",
+          "format": "amount"
+        },
+        {
+          "label": "Currency",
+          "field": "Currency"
+        }
+      ]
+    },
+    {
+      "id": "incomingDetails",
+      "title": "Incoming Message Details",
+      "type": "table",
+      "pipeline": [
+        {
+          "$project": {
+            "_id": 0,
+            "Creation Date": "$header.dateCreated",
+            "Message Reference": "$messageReferenceFinal",
+            "TRN Reference": "$transactionReferenceFinal",
+            "User Reference": "$userReferenceFinal",
+            "I/O": "$directionFinal",
+            "Sender": "$senderFinal",
+            "Receiver": "$receiverFinal",
+            "Logical Terminal": "$logicalTerminalFinal",
+            "Message Type": "$messageTypeFinal",
+            "MT/MX": "$messageFamilyFinal",
+            "Currency": "$currencyFinal",
+            "Amount": "$amountFinal",
+            "Value Date": "$valueDateFinal",
+            "Status": "$statusBucket",
+            "Phase": {
+              "$ifNull": [
+                "$status.phase",
+                "-"
+              ]
+            },
+            "Action": {
+              "$ifNull": [
+                "$status.action",
+                "-"
+              ]
+            },
+            "Reason": {
+              "$ifNull": [
+                "$status.reason",
+                "-"
+              ]
+            },
+            "Session Number": "$sessionNumberFinal",
+            "Sequence Number": "$sequenceNumberFinal",
+            "SN/SEQ": "$snSeqFinal",
+            "NACK Flag": "$nackFlag",
+            "UETR": "$uetrFinal",
+            "MIR/MOR": "$mirCompatibleRef",
+            "Department/Owner": "$departmentName",
+            "Backend Channel": "$backendChannelFinal",
+            "Network Channel": "$networkChannelFinal"
+          }
+        },
+        {
+          "$sort": {
+            "Creation Date": 1,
+            "Message Reference": 1
+          }
+        }
+      ],
+      "columns": [
+        "Creation Date",
+        "Message Reference",
+        "TRN Reference",
+        "Sender",
+        "Receiver",
+        "Message Type",
+        "Currency",
+        "Amount",
+        "Status"
+      ]
+    },
+    {
+      "id": "messageTypeSummary",
+      "title": "Message Type Summary",
+      "type": "table",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": {
+              "messageType": "$messageTypeFinal",
+              "family": "$messageFamilyFinal",
+              "currency": "$currencyFinal"
+            },
+            "Message Count": {
+              "$sum": 1
+            },
+            "Total Amount": {
+              "$sum": "$amountFinal"
+            },
+            "Success Count": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "Failed Count": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Message Type": "$_id.messageType",
+            "MT/MX": "$_id.family",
+            "Message Count": "$Message Count",
+            "Success Count": "$Success Count",
+            "Failed Count": "$Failed Count",
+            "Total Amount": "$Total Amount",
+            "Currency": "$_id.currency"
+          }
+        },
+        {
+          "$sort": {
+            "MT/MX": 1,
+            "Message Type": 1,
+            "Currency": 1
+          }
+        }
+      ],
+      "columns": [
+        "Message Type",
+        "MT/MX",
+        "Message Count",
+        "Success Count",
+        "Failed Count",
+        "Total Amount",
+        "Currency"
+      ]
+    },
+    {
+      "id": "statusSummary",
+      "title": "Status Summary",
+      "type": "table",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": "$statusBucket",
+            "Total Count": {
+              "$sum": 1
+            },
+            "Total Amount": {
+              "$sum": "$amountFinal"
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Status": "$_id",
+            "Total Count": "$Total Count",
+            "Percentage": "$Total Count",
+            "Total Amount": "$Total Amount"
+          }
+        },
+        {
+          "$sort": {
+            "Status": 1
+          }
+        }
+      ],
+      "columns": [
+        "Status",
+        "Total Count",
+        "Percentage",
+        "Total Amount"
+      ],
+      "fixedStatusRows": [
+        "Success",
+        "Failed",
+        "Pending",
+        "Repaired",
+        "Rejected",
+        "Cancelled"
+      ]
+    },
+    {
+      "id": "currencySummary",
+      "title": "Currency Summary",
+      "type": "table",
+      "pipeline": [
+        {
+          "$group": {
+            "_id": "$currencyFinal",
+            "Total Messages": {
+              "$sum": 1
+            },
+            "Total Amount": {
+              "$sum": "$amountFinal"
+            },
+            "Success Count": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$eq": [
+                      "$statusBucket",
+                      "Success"
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            "Failed Count": {
+              "$sum": {
+                "$cond": [
+                  {
+                    "$in": [
+                      "$statusBucket",
+                      [
+                        "Failed",
+                        "Rejected"
+                      ]
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "Currency": "$_id",
+            "Total Messages": "$Total Messages",
+            "Success Count": "$Success Count",
+            "Failed Count": "$Failed Count",
+            "Total Amount": "$Total Amount"
+          }
+        },
+        {
+          "$sort": {
+            "Currency": 1
+          }
+        }
+      ],
+      "columns": [
+        "Currency",
+        "Total Messages",
+        "Success Count",
+        "Failed Count",
+        "Total Amount"
+      ]
+    }
+  ]
+}]
